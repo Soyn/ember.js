@@ -4,9 +4,7 @@
 
 import {
   get,
-  Mixin,
-  beginPropertyChanges,
-  endPropertyChanges
+  Mixin
 } from 'ember-metal';
 import MutableEnumerable from './mutable_enumerable';
 import EmberArray, { objectAt } from './array';
@@ -369,11 +367,9 @@ export default Mixin.create(EmberArray, MutableEnumerable, {
     @public
   */
   removeObjects(objects) {
-    beginPropertyChanges(this);
     for (let i = objects.length - 1; i >= 0; i--) {
       this.removeObject(objects[i]);
     }
-    endPropertyChanges(this);
     return this;
   },
 
@@ -412,9 +408,7 @@ export default Mixin.create(EmberArray, MutableEnumerable, {
     @public
   */
   addObjects(objects) {
-    beginPropertyChanges(this);
     objects.forEach(obj => this.addObject(obj));
-    endPropertyChanges(this);
     return this;
   }
 });

@@ -13,10 +13,7 @@ import {
   Mixin,
   mixin,
   observer,
-  _beforeObserver,
-  beginPropertyChanges,
-  endPropertyChanges,
-  changeProperties
+  _beforeObserver
 } from '..';
 
 function K() {}
@@ -266,65 +263,6 @@ testBoth('removing an chain before observer on change should not fail', function
   assert.equal(count2, 1, 'observer2 fired');
   assert.equal(count3, 1, 'observer3 fired');
   assert.equal(count4, 0, 'observer4 did not fire');
-});
-
-testBoth('deferring property change notifications', function(get, set, assert) {
-  let obj = { foo: 'foo' };
-  let fooCount = 0;
-
-  addObserver(obj, 'foo', function() { fooCount++; });
-
-  beginPropertyChanges(obj);
-  set(obj, 'foo', 'BIFF');
-  set(obj, 'foo', 'BAZ');
-  endPropertyChanges(obj);
-
-  assert.equal(fooCount, 1, 'foo should have fired once');
-});
-
-testBoth('deferring property change notifications safely despite exceptions', function(get, set, assert) {
-  let obj = { foo: 'foo' };
-  let fooCount = 0;
-  let exc = new Error('Something unexpected happened!');
-
-  assert.expect(2);
-  addObserver(obj, 'foo', function() { fooCount++; });
-
-  try {
-    changeProperties(function() {
-      set(obj, 'foo', 'BIFF');
-      set(obj, 'foo', 'BAZ');
-      throw exc;
-    });
-  } catch (err) {
-    if (err !== exc) {
-      throw err;
-    }
-  }
-
-  assert.equal(fooCount, 1, 'foo should have fired once');
-
-  changeProperties(function() {
-    set(obj, 'foo', 'BIFF2');
-    set(obj, 'foo', 'BAZ2');
-  });
-
-  assert.equal(fooCount, 2, 'foo should have fired again once');
-});
-
-testBoth('deferring property change notifications will not defer before observers', function(get, set, assert) {
-  let obj = { foo: 'foo' };
-  let fooCount = 0;
-
-  _addBeforeObserver(obj, 'foo', function() { fooCount++; });
-
-  beginPropertyChanges(obj);
-  set(obj, 'foo', 'BIFF');
-  assert.equal(fooCount, 1, 'should fire before observer immediately');
-  set(obj, 'foo', 'BAZ');
-  endPropertyChanges(obj);
-
-  assert.equal(fooCount, 1, 'should not fire before observer twice');
 });
 
 testBoth('addObserver should propagate through prototype', function(get, set, assert) {
@@ -758,8 +696,6 @@ testBoth('depending on a chain with a capitalized first key', function(get, set,
   assert.equal(count, 6, 'should be not have invoked observer');
 });
 
-QUnit.module('_removeBeforeObserver');
-
 // ..........................................................
 // SETTING IDENTICAL VALUES
 //
@@ -811,79 +747,7 @@ testBoth('setting a cached computed property whose value has changed should trig
   assert.equal(get(obj, 'foo'), 'bar');
 });
 
-QUnit.module('changeProperties');
-
-testBoth('observers added/removed during changeProperties should do the right thing.', function(get, set, assert) {
-  let obj = {
-    foo: 0
-  };
-  function Observer() {
-    this.willChangeCount = 0;
-    this.didChangeCount = 0;
-  }
-  Observer.prototype = {
-    add() {
-      _addBeforeObserver(obj, 'foo', this, 'willChange');
-      addObserver(obj, 'foo', this, 'didChange');
-    },
-    remove() {
-      _removeBeforeObserver(obj, 'foo', this, 'willChange');
-      removeObserver(obj, 'foo', this, 'didChange');
-    },
-    willChange() {
-      this.willChangeCount++;
-    },
-    didChange() {
-      this.didChangeCount++;
-    }
-  };
-  let addedBeforeFirstChangeObserver = new Observer();
-  let addedAfterFirstChangeObserver = new Observer();
-  let addedAfterLastChangeObserver = new Observer();
-  let removedBeforeFirstChangeObserver = new Observer();
-  let removedBeforeLastChangeObserver = new Observer();
-  let removedAfterLastChangeObserver = new Observer();
-  removedBeforeFirstChangeObserver.add();
-  removedBeforeLastChangeObserver.add();
-  removedAfterLastChangeObserver.add();
-  changeProperties(function () {
-    removedBeforeFirstChangeObserver.remove();
-    addedBeforeFirstChangeObserver.add();
-
-    set(obj, 'foo', 1);
-
-    assert.equal(addedBeforeFirstChangeObserver.willChangeCount, 1, '_addBeforeObserver called before the first change invoked immediately');
-    assert.equal(addedBeforeFirstChangeObserver.didChangeCount, 0, 'addObserver called before the first change is deferred');
-
-    addedAfterFirstChangeObserver.add();
-    removedBeforeLastChangeObserver.remove();
-
-    set(obj, 'foo', 2);
-
-    assert.equal(addedAfterFirstChangeObserver.willChangeCount, 1, '_addBeforeObserver called after the first change invoked immediately');
-    assert.equal(addedAfterFirstChangeObserver.didChangeCount, 0, 'addObserver called after the first change is deferred');
-
-    addedAfterLastChangeObserver.add();
-    removedAfterLastChangeObserver.remove();
-  });
-
-  assert.equal(removedBeforeFirstChangeObserver.willChangeCount, 0, '_removeBeforeObserver called before the first change sees none');
-  assert.equal(removedBeforeFirstChangeObserver.didChangeCount, 0, 'removeObserver called before the first change sees none');
-  assert.equal(addedBeforeFirstChangeObserver.willChangeCount, 1, '_addBeforeObserver called before the first change sees only 1');
-  assert.equal(addedBeforeFirstChangeObserver.didChangeCount, 1, 'addObserver called before the first change sees only 1');
-  assert.equal(addedAfterFirstChangeObserver.willChangeCount, 1, '_addBeforeObserver called after the first change sees 1');
-  assert.equal(addedAfterFirstChangeObserver.didChangeCount, 1, 'addObserver called after the first change sees 1');
-  assert.equal(addedAfterLastChangeObserver.willChangeCount, 0, '_addBeforeObserver called after the last change sees none');
-  assert.equal(addedAfterLastChangeObserver.didChangeCount, 0, 'addObserver called after the last change sees none');
-  assert.equal(removedBeforeLastChangeObserver.willChangeCount, 1, '_removeBeforeObserver called before the last change still sees 1');
-  assert.equal(removedBeforeLastChangeObserver.didChangeCount, 1, 'removeObserver called before the last change still sees 1');
-  assert.equal(removedAfterLastChangeObserver.willChangeCount, 1, '_removeBeforeObserver called after the last change still sees 1');
-  assert.equal(removedAfterLastChangeObserver.didChangeCount, 1, 'removeObserver called after the last change still sees 1');
-});
-
-
 QUnit.module('Keys behavior with observers');
-
 
 testBoth('should not leak properties on the prototype', function (get, set, assert) {
   function Beer() { }

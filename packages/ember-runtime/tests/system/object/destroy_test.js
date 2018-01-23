@@ -2,8 +2,6 @@ import {
   run,
   observer,
   set,
-  beginPropertyChanges,
-  endPropertyChanges,
   peekMeta
 } from 'ember-metal';
 import { testBoth } from 'internal-test-helpers';
@@ -44,28 +42,6 @@ if (MANDATORY_SETTER) {
     assert.throws(() => set(obj, 'foo', 'baz'), Error, 'raises an exception');
   });
 }
-
-QUnit.test('observers should not fire after an object has been destroyed', function(assert) {
-  let count = 0;
-  let obj = EmberObject.extend({
-    fooDidChange: observer('foo', function() {
-      count++;
-    })
-  }).create();
-
-  obj.set('foo', 'bar');
-
-  assert.equal(count, 1, 'observer was fired once');
-
-  run(() => {
-    beginPropertyChanges();
-    obj.set('foo', 'quux');
-    obj.destroy();
-    endPropertyChanges();
-  });
-
-  assert.equal(count, 1, 'observer was not called after object was destroyed');
-});
 
 QUnit.test('destroyed objects should not see each others changes during teardown but a long lived object should', function(assert) {
   let shouldChange = 0;

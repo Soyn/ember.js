@@ -87,12 +87,11 @@ Ember.isEmpty = metal.isEmpty;
 Ember.isBlank = metal.isBlank;
 Ember.isPresent = metal.isPresent;
 Ember.run = metal.run;
-Ember._ObserverSet = metal.ObserverSet;
 Ember.propertyWillChange = metal.propertyWillChange;
 Ember.propertyDidChange = metal.propertyDidChange;
 Ember.overrideChains = metal.overrideChains;
-Ember.beginPropertyChanges = metal.beginPropertyChanges;
-Ember.endPropertyChanges = metal.endPropertyChanges;
+Ember.beginPropertyChanges = metal.beginPropertyChanges;   
+Ember.endPropertyChanges = metal.endPropertyChanges;   
 Ember.changeProperties = metal.changeProperties;
 Ember.platform        = {
   defineProperty: true,

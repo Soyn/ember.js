@@ -194,12 +194,7 @@ export default Mixin.create({
     ### Property Observers
 
     In addition to changing the property, `set()` will also register a property
-    change with the object. Unless you have placed this call inside of a
-    `beginPropertyChanges()` and `endPropertyChanges(),` any "local" observers
-    (i.e. observer methods declared on the same object), will be called
-    immediately. Any "remote" observers (i.e. observer methods declared on
-    another object) will be placed in a queue and called at a later time in a
-    coalesced manner.
+    change with the object and call any observers.
 
     @method set
     @param {String} keyName The property to set
@@ -213,9 +208,7 @@ export default Mixin.create({
 
 
   /**
-    Sets a list of properties at once. These properties are set inside
-    a single `beginPropertyChanges` and `endPropertyChanges` batch, so
-    observers will be buffered.
+    Sets a list of properties at once.
 
     ```javascript
     record.setProperties({ firstName: 'Charles', lastName: 'Jolley' });
@@ -230,43 +223,14 @@ export default Mixin.create({
     return setProperties(this, hash);
   },
 
-  /**
-    Begins a grouping of property changes.
-
-    You can use this method to group property changes so that notifications
-    will not be sent until the changes are finished. If you plan to make a
-    large number of changes to an object at one time, you should call this
-    method at the beginning of the changes to begin deferring change
-    notifications. When you are done making changes, call
-    `endPropertyChanges()` to deliver the deferred change notifications and end
-    deferring.
-
-    @method beginPropertyChanges
-    @return {Observable}
-    @private
-  */
-  beginPropertyChanges() {
-    beginPropertyChanges();
-    return this;
+  beginPropertyChanges() {   
+    beginPropertyChanges();    
+    return this;   
   },
 
-  /**
-    Ends a grouping of property changes.
-
-    You can use this method to group property changes so that notifications
-    will not be sent until the changes are finished. If you plan to make a
-    large number of changes to an object at one time, you should call
-    `beginPropertyChanges()` at the beginning of the changes to defer change
-    notifications. When you are done making changes, call this method to
-    deliver the deferred change notifications and end deferring.
-
-    @method endPropertyChanges
-    @return {Observable}
-    @private
-  */
-  endPropertyChanges() {
-    endPropertyChanges();
-    return this;
+  endPropertyChanges() {   
+    endPropertyChanges();    
+    return this;   
   },
 
   /**

@@ -1,12 +1,9 @@
-import { changeProperties } from './property_events';
 import { set } from './property_set';
 /**
  @module @ember/object
 */
 /**
-  Set a list of properties on an object. These properties are set inside
-  a single `beginPropertyChanges` and `endPropertyChanges` batch, so
-  observers will be buffered.
+  Set a list of properties on an object.
 
   ```javascript
   let anObject = Ember.Object.create();
@@ -28,15 +25,13 @@ import { set } from './property_set';
 */
 export default function setProperties(obj, properties) {
   if (properties === null || typeof properties !== 'object') { return properties; }
-  changeProperties(() => {
-    let props = Object.keys(properties);
-    let propertyName;
+  let props = Object.keys(properties);
+  let propertyName;
 
-    for (let i = 0; i < props.length; i++) {
-      propertyName = props[i];
+  for (let i = 0; i < props.length; i++) {
+    propertyName = props[i];
 
-      set(obj, propertyName, properties[propertyName]);
-    }
-  });
+    set(obj, propertyName, properties[propertyName]);
+  }
   return properties;
 }

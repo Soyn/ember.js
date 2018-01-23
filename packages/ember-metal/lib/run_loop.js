@@ -2,10 +2,6 @@ import { assert, deprecate, isTesting } from 'ember-debug';
 import {
   onErrorTarget
 } from './error_handler';
-import {
-  beginPropertyChanges,
-  endPropertyChanges
-} from './property_events';
 import Backburner from 'backburner';
 
 function onBegin(current) {
@@ -17,10 +13,6 @@ function onEnd(current, next) {
 }
 
 const backburner = new Backburner(['sync', 'actions', 'destroy'], {
-  sync: {
-    before: beginPropertyChanges,
-    after: endPropertyChanges
-  },
   defaultQueue: 'actions',
   onBegin,
   onEnd,

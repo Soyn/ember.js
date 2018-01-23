@@ -9,7 +9,6 @@ import {
 import {
   markObjectAsDirty
 } from './tags';
-import ObserverSet from './observer_set';
 import {
   EMBER_GLIMMER_DETECT_BACKTRACKING_RERENDER,
 } from 'ember/features';
@@ -22,10 +21,6 @@ import { changeEvent, beforeEvent } from './observer';
  */
 
 export const PROPERTY_DID_CHANGE = symbol('PROPERTY_DID_CHANGE');
-
-const beforeObserverSet = new ObserverSet();
-const observerSet = new ObserverSet();
-let deferred = 0;
 
 // ..........................................................
 // PROPERTY CHANGES
@@ -199,94 +194,15 @@ function overrideChains(obj, keyName, meta) {
   }
 }
 
-/**
-  @method beginPropertyChanges
-  @chainable
-  @private
-*/
-function beginPropertyChanges() {
-  deferred++;
-}
-
-/**
-  @method endPropertyChanges
-  @private
-*/
-function endPropertyChanges() {
-  deferred--;
-  if (deferred <= 0) {
-    beforeObserverSet.clear();
-    observerSet.flush();
-  }
-}
-
-/**
-  Make a series of property changes together in an
-  exception-safe way.
-
-  ```javascript
-  Ember.changeProperties(function() {
-    obj1.set('foo', mayBlowUpWhenSet);
-    obj2.set('bar', baz);
-  });
-  ```
-
-  @method changeProperties
-  @param {Function} callback
-  @private
-*/
-function changeProperties(callback) {
-  beginPropertyChanges();
-  try {
-    callback();
-  } finally {
-    endPropertyChanges();
-  }
-}
-
-function indexOf(array, target, method) {
-  let index = -1;
-  // hashes are added to the end of the event array
-  // so it makes sense to start searching at the end
-  // of the array and search in reverse
-  for (let i = array.length - 3; i >= 0; i -= 3) {
-    if (target === array[i] && method === array[i + 1]) {
-      index = i;
-      break;
-    }
-  }
-  return index;
-}
-
-function accumulateListeners(obj, eventName, otherActions, meta) {
-  let actions = meta.matchingListeners(eventName);
-  if (actions === undefined) { return; }
-  let newActions = [];
-
-  for (let i = actions.length - 3; i >= 0; i -= 3) {
-    let target = actions[i];
-    let method = actions[i + 1];
-    let actionIndex = indexOf(otherActions, target, method);
-
-    if (actionIndex === -1) {
-      let flags = actions[i + 2];
-      otherActions.push(target, method, flags);
-      newActions.push(target, method, flags);
-    }
-  }
-
-  return newActions;
-}
+function beginPropertyChanges() {}
+function endPropertyChanges() {}
+function changeProperties() {}
 
 function notifyBeforeObservers(obj, keyName, meta) {
   if (meta.isSourceDestroying()) { return; }
 
   let eventName = beforeEvent(keyName);
   let added;
-  if (deferred > 0) {
-    let listeners = beforeObserverSet.add(obj, keyName, eventName);
-    added = accumulateListeners(obj, eventName, listeners, meta);
-  }
   sendEvent(obj, eventName, [obj, keyName], added);
 }
 
@@ -294,12 +210,7 @@ function notifyObservers(obj, keyName, meta) {
   if (meta.isSourceDestroying()) { return; }
 
   let eventName = changeEvent(keyName);
-  if (deferred > 0) {
-    let listeners = observerSet.add(obj, keyName, eventName);
-    accumulateListeners(obj, eventName, listeners, meta);
-  } else {
-    sendEvent(obj, eventName, [obj, keyName]);
-  }
+  sendEvent(obj, eventName, [obj, keyName]);
 }
 
 export {
